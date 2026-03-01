@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f3fff5"/>
+      <stop offset="100%" stop-color="#fffdf3"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#bg)"/>
+  <rect x="300" y="130" width="200" height="250" rx="28" fill="#ffffff" stroke="#d8ead6" stroke-width="5"/>
+  <rect x="315" y="170" width="170" height="180" rx="18" fill="#fff8dc"/>
+  <rect x="330" y="100" width="140" height="40" rx="10" fill="#ffffff" stroke="#d8ead6" stroke-width="5"/>
+  <path d="M560 180 C620 190, 650 240, 600 310" fill="none" stroke="#8fbb8f" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="598" cy="310" r="18" fill="#8fbb8f"/>
+  <text x="40" y="455" fill="#4f7c4f" font-size="48" font-family="Arial, sans-serif" font-weight="700">Butter Milk</text>
+</svg>

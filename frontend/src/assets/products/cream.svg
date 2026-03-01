@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff9ef"/>
+      <stop offset="100%" stop-color="#fff2d8"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#bg)"/>
+  <rect x="240" y="130" width="320" height="260" rx="40" fill="#ffffff" stroke="#e8d8bd" stroke-width="6"/>
+  <path d="M280 270 C310 205, 360 330, 400 230 C430 180, 470 315, 520 240" stroke="#ffe9bf" stroke-width="26" fill="none" stroke-linecap="round"/>
+  <circle cx="315" cy="210" r="16" fill="#fff3d3"/>
+  <circle cx="460" cy="200" r="14" fill="#ffe8b1"/>
+  <text x="40" y="455" fill="#8c6b2a" font-size="48" font-family="Arial, sans-serif" font-weight="700">Cream</text>
+</svg>
