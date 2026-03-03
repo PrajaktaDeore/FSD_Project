@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.db.models import Q
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -52,13 +53,36 @@ class LoginView(APIView):
     authentication_classes = []
 
     def post(self, request, format=None):
-        email = request.data.get("email")
+        identifier = request.data.get("identifier") or request.data.get("email") or request.data.get("username")
         password = request.data.get("password")
-        if not email or not password:
-            return Response({"detail": "Email and password required"}, status=status.HTTP_400_BAD_REQUEST)
+        if not identifier or not password:
+            return Response({"detail": "Email/username and password required"}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            staff = Staff.objects.get(email=email, password=password)
+            staff = Staff.objects.get(
+                Q(email__iexact=identifier) | Q(name__iexact=identifier),
+                password=password,
+                is_active=True,
+            )
         except Staff.DoesNotExist:
             return Response({"detail": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
         token = create_token(staff)
         return Response({"token": token, "staff_id": staff.pk, "email": staff.email})
+
+
+class RegisterView(APIView):
+    permission_classes = []
+    authentication_classes = []
+
+    def post(self, request, format=None):
+        email = request.data.get("email")
+        if not email:
+            return Response({"detail": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if Staff.objects.filter(email=email).exists():
+            return Response({"detail": "Staff with this email already exists"}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = StaffSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"detail": "Staff registered successfully"}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

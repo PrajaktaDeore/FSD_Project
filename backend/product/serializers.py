@@ -3,6 +3,8 @@ from .models import Product
 
 
 class ProductSerializer(serializers.ModelSerializer):
+    category_name = serializers.CharField(source="category.name", read_only=True)
+
     class Meta:
         model = Product
-        fields = "__all__"
+        fields = ("id", "name", "description", "price", "category", "category_name", "is_active")

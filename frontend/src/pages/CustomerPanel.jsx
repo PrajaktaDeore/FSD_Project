@@ -1,23 +1,45 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import customerApi from '../services/customerApi';
-import milkImage from '../assets/products/milk.jpg';
-import cowMilkImage from '../assets/products/c_milk.jpg';
-import buffalloMilkImage from '../assets/products/b1.jpeg';
-import curdImage from '../assets/products/c.jpeg';
-import butterMilkImage from '../assets/products/bu.jpeg';
+import milkImage from '../assets/images/milk.jpeg';
+import cowMilkImage from '../assets/images/milk.jpeg';
+import buffalloMilkImage from '../assets/images/milk.jpeg';
+import curdImage from '../assets/images/cu.jpeg';
+import butterMilkImage from '../assets/images/butrmilk.jpeg';
 import gheeImage from '../assets/products/ghee.jpg';
-import paneerImage from '../assets/products/p.jpg';
-import butterImage from '../assets/products/butr.jpeg';
+import paneerImage from '../assets/images/pn.jpeg';
+import butterImage from '../assets/images/butter.jpeg';
 import yogurtImage from '../assets/products/yogurt.svg';
 import creamImage from '../assets/products/cream.svg';
 import commonProductImage from '../assets/products/common-product.svg';
+import CustomerProducts from './customerProducts';
+import CustomerSubscription from './customerSubscription';
+import CustomerOrder from './customerOrder';
+import CustomerCategory from './customerCategory';
 import './customer-panel.css';
 
 const ORDER_STORAGE_KEY = 'gheeOrders';
 const CART_STORAGE_KEY = 'customerCart';
 const WISHLIST_STORAGE_KEY = 'customerWishlist';
 const RECENT_ORDER_DAYS = 7;
+const TAB_TO_SEGMENT = {
+    products: 'products',
+    milk: 'subscription',
+    ghee: 'orders',
+    manage: 'category',
+    wishlist: 'wishlist',
+    cart: 'cart',
+    billing: 'billing',
+};
+const SEGMENT_TO_TAB = {
+    products: 'products',
+    subscription: 'milk',
+    orders: 'ghee',
+    category: 'manage',
+    wishlist: 'wishlist',
+    cart: 'cart',
+    billing: 'billing',
+};
 
 const currency = (value) =>
     new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(Number(value || 0));
@@ -40,6 +62,7 @@ const getProductImage = (name) => {
 
 const CustomerPanel = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const session = JSON.parse(localStorage.getItem('customerSession') || '{}');
     const customerId = session.customer_id;
 
@@ -69,10 +92,24 @@ const CustomerPanel = () => {
     });
 
     const [milkForm, setMilkForm] = useState({ product: '', quantity: 1 });
-    const [gheeForm, setGheeForm] = useState({ product: '', quantity: 1 });
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
     const [isBusy, setIsBusy] = useState(false);
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const [isNavOpen, setIsNavOpen] = useState(false);
+
+    const activateTab = (tab, options = {}) => {
+        const { resetCart = false, replace = false } = options;
+        if (resetCart) {
+            setCartStep('cart');
+        }
+        setActiveTab(tab);
+        const segment = TAB_TO_SEGMENT[tab] || 'products';
+        const target = `/customer-panel/${segment}`;
+        if (location.pathname !== target) {
+            navigate(target, { replace });
+        }
+    };
 
     const productById = useMemo(() => {
         const map = {};
@@ -82,10 +119,6 @@ const CustomerPanel = () => {
 
     const milkProducts = useMemo(
         () => products.filter((p) => p.name?.toLowerCase().includes('milk') && p.is_active),
-        [products]
-    );
-    const gheeProducts = useMemo(
-        () => products.filter((p) => p.name?.toLowerCase().includes('ghee') && p.is_active),
         [products]
     );
 
@@ -113,6 +146,32 @@ const CustomerPanel = () => {
         }, 0),
         [activeSubscriptions, productById]
     );
+    const categoryGroups = useMemo(() => {
+        const groups = {};
+        products
+            .filter((p) => p.is_active)
+            .forEach((p) => {
+                const key = (p.category_name || '').trim() || `Category ${p.category}`;
+                if (!groups[key]) {
+                    groups[key] = {
+                        name: key,
+                        count: 0,
+                        minPrice: Number(p.price || 0),
+                        maxPrice: Number(p.price || 0),
+                        samples: [],
+                    };
+                }
+                groups[key].count += 1;
+                const price = Number(p.price || 0);
+                groups[key].minPrice = Math.min(groups[key].minPrice, price);
+                groups[key].maxPrice = Math.max(groups[key].maxPrice, price);
+                if (groups[key].samples.length < 3) {
+                    groups[key].samples.push(p.name);
+                }
+            });
+
+        return Object.values(groups).sort((a, b) => a.name.localeCompare(b.name));
+    }, [products]);
 
     const gheeOrderTotal = useMemo(
         () => gheeOrders.reduce((sum, order) => sum + Number(order.total || 0), 0),
@@ -141,7 +200,6 @@ const CustomerPanel = () => {
         [cartItems]
     );
     const wishlistCount = useMemo(() => wishlistItems.length, [wishlistItems]);
-
     const loadData = async () => {
         try {
             const [productsRes, subscriptionsRes] = await Promise.all([
@@ -159,7 +217,7 @@ const CustomerPanel = () => {
 
     useEffect(() => {
         if (!customerId) {
-            navigate('/customer-login');
+            navigate('/login');
             return;
         }
         loadData();
@@ -172,6 +230,22 @@ const CustomerPanel = () => {
         setWishlistItems(wishlistStore[customerId] || []);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [customerId, navigate]);
+
+    useEffect(() => {
+        const segment = location.pathname.split('/')[2] || '';
+        const mappedTab = SEGMENT_TO_TAB[segment];
+
+        if (!mappedTab) {
+            activateTab('products', { replace: true });
+            return;
+        }
+
+        setActiveTab(mappedTab);
+        if (mappedTab !== 'cart' && cartStep !== 'cart') {
+            setCartStep('cart');
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [location.pathname]);
 
     const persistOrders = (orders) => {
         const store = JSON.parse(localStorage.getItem(ORDER_STORAGE_KEY) || '{}');
@@ -223,8 +297,7 @@ const CustomerPanel = () => {
 
         persistCart(nextItems);
         setMessage(`${product.name} added to cart.`);
-        setActiveTab('cart');
-        setCartStep('cart');
+        activateTab('cart', { resetCart: true });
     };
 
     const addToWishlist = (product) => {
@@ -242,7 +315,7 @@ const CustomerPanel = () => {
             },
         ]);
         setMessage(`${product.name} moved to wishlist.`);
-        setActiveTab('wishlist');
+        activateTab('wishlist');
     };
 
     const updateCartQuantity = (productId, quantity) => {
@@ -292,8 +365,7 @@ const CustomerPanel = () => {
         persistCart(nextCart);
         removeWishlistItem(productId);
         setMessage(`${item.productName} moved to cart.`);
-        setActiveTab('cart');
-        setCartStep('cart');
+        activateTab('cart', { resetCart: true });
     };
 
     const openCheckout = () => {
@@ -382,7 +454,7 @@ const CustomerPanel = () => {
         });
         setCartStep('cart');
         setMessage('Order placed successfully.');
-        setActiveTab('ghee');
+        activateTab('ghee', { resetCart: true });
     };
 
     const getOrderTrack = (orderedAt) => {
@@ -415,92 +487,78 @@ const CustomerPanel = () => {
         }
     };
 
-    const orderGhee = (e) => {
-        e.preventDefault();
-        setMessage('');
-        setError('');
-
-        const product = productById[Number(gheeForm.product)];
-        if (!product) {
-            setError('Select a ghee product.');
-            return;
-        }
-
-        const quantity = Number(gheeForm.quantity);
-        const total = quantity * Number(product.price || 0);
-        const next = [
-            ...gheeOrders,
-            {
-                id: Date.now(),
-                productId: product.id,
-                productName: product.name,
-                quantity,
-                unitPrice: Number(product.price),
-                total,
-                orderedAt: new Date().toISOString(),
-            },
-        ];
-        persistOrders(next);
-        setGheeForm({ product: '', quantity: 1 });
-        setMessage('Ghee order added.');
-    };
-
-    const updateSubscription = async (subId, changes) => {
-        if (isBusy) return;
-        const current = subscriptions.find((s) => s.id === subId);
-        if (!current) return;
-
-        setIsBusy(true);
-        setError('');
-        setMessage('');
-        try {
-            await customerApi.put(`/subscription/subscription/${subId}/`, {
-                customer: Number(current.customer),
-                product: Number(current.product),
-                quantity: Number(changes.quantity ?? current.quantity),
-                is_active: Boolean(changes.is_active ?? current.is_active),
-            });
-            setMessage('Subscription updated.');
-            await loadData();
-        } catch (err) {
-            setError(err.response?.data?.detail || 'Unable to update subscription.');
-        } finally {
-            setIsBusy(false);
-        }
-    };
-
-    const deleteSubscription = async (subId) => {
-        if (isBusy) return;
-        setIsBusy(true);
-        setError('');
-        setMessage('');
-        try {
-            await customerApi.delete(`/subscription/subscription/${subId}/`);
-            setMessage('Subscription removed.');
-            await loadData();
-        } catch (err) {
-            setError(err.response?.data?.detail || 'Unable to delete subscription.');
-        } finally {
-            setIsBusy(false);
-        }
-    };
-
     const logout = () => {
+        setIsNavOpen(false);
+        setIsUserMenuOpen(false);
         localStorage.removeItem('customerSession');
-        navigate('/customer-login');
+        navigate('/login');
     };
 
     return (
         <div className="customer-shell">
-            <div className="container py-4">
+            <nav className="customer-top-navbar">
+                <div className="container customer-top-navbar-inner">
+                    <div className="customer-nav-title">Milkman</div>
+                    <button
+                        type="button"
+                        className="customer-nav-toggle"
+                        onClick={() => setIsNavOpen((prev) => !prev)}
+                        aria-label="Toggle customer navigation"
+                        aria-expanded={isNavOpen}
+                    >
+                        <i className="fa-solid fa-bars" aria-hidden="true" />
+                    </button>
+                    <div className={`customer-nav-collapse ${isNavOpen ? 'open' : ''}`}>
+                        <ul className="customer-top-nav-links">
+                            <li><button type="button" onClick={() => { setIsNavOpen(false); navigate('/'); }}>Home</button></li>
+                            <li><button type="button" className={activeTab === 'products' ? 'active' : ''} onClick={() => { setIsNavOpen(false); activateTab('products'); }}>Products</button></li>
+                            <li><button type="button" className={activeTab === 'milk' ? 'active' : ''} onClick={() => { setIsNavOpen(false); activateTab('milk'); }}>Subscribe</button></li>
+                            <li><button type="button" className={activeTab === 'ghee' ? 'active' : ''} onClick={() => { setIsNavOpen(false); activateTab('ghee'); }}>Orders</button></li>
+                            <li><button type="button" className={activeTab === 'manage' ? 'active' : ''} onClick={() => { setIsNavOpen(false); activateTab('manage'); }}>Category</button></li>
+                        </ul>
+                        <div className="customer-top-nav-actions">
+                            <button type="button" className="btn btn-outline-light btn-sm" onClick={() => { setIsNavOpen(false); activateTab('wishlist'); }}>
+                                Wishlist ({wishlistCount})
+                            </button>
+                            <button
+                                type="button"
+                                className="btn btn-outline-light btn-sm"
+                                onClick={() => { setIsNavOpen(false); activateTab('cart', { resetCart: true }); }}
+                            >
+                                Cart ({cartCount})
+                            </button>
+                            <button type="button" className="btn btn-light btn-sm" onClick={logout}>Logout</button>
+                            <div className="customer-user-menu">
+                                <button
+                                    type="button"
+                                    className="customer-user-btn"
+                                    onClick={() => setIsUserMenuOpen((prev) => !prev)}
+                                    aria-label="Open user details"
+                                >
+                                    <i className="fa-solid fa-user" aria-hidden="true" />
+                                </button>
+                                {isUserMenuOpen && (
+                                    <div className="customer-user-panel">
+                                        <h6>User Details</h6>
+                                        <div><strong>Name:</strong> {session.name || '-'}</div>
+                                        <div><strong>Email:</strong> {session.email || '-'}</div>
+                                        <div><strong>Address:</strong> {session.address || 'Not available'}</div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+            <div className="container py-4 customer-main-content">
                 <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-3 gap-2">
                     <div>
-                        <h2 className="mb-0">Welcome, {session.name || 'Customer'}</h2>
-                        <small className="text-muted">{session.email}</small>
+                        <h4 className="mb-0 customer-welcome-name">Welcome, {session.name || 'Customer'}</h4>
+                        <small className="customer-welcome-email">{session.email}</small>
                     </div>
                     <div className="d-flex align-items-center gap-2">
                         <div className="input-group search-top-input">
-                            <span className="input-group-text search-icon-addon">🔍</span>
+                            <span className="input-group-text search-icon-addon"><i className="fa-solid fa-magnifying-glass" aria-hidden="true" /></span>
                             <input
                                 type="text"
                                 className="form-control"
@@ -508,11 +566,13 @@ const CustomerPanel = () => {
                                 value={searchQuery}
                                 onChange={(e) => {
                                     setSearchQuery(e.target.value);
-                                    setActiveTab('products');
+                                    if (activeTab !== 'products') {
+                                        activateTab('products');
+                                    }
                                 }}
                             />
                         </div>
-                        <button
+                        {/* <button
                             type="button"
                             className="btn btn-outline-danger wishlist-icon-btn"
                             onClick={() => setActiveTab('wishlist')}
@@ -530,86 +590,20 @@ const CustomerPanel = () => {
                             title="Cart"
                         >
                             Cart ({cartCount})
-                        </button>
-                        <button
-                            type="button"
-                            className="btn btn-outline-dark profile-icon-btn"
-                            onClick={() => setActiveTab('profile')}
-                            title="Profile"
-                        >
-                            👤
-                        </button>
-                        <button className="btn btn-outline-secondary" onClick={logout}>Logout</button>
+                        </button> */}
                     </div>
-                </div>
-
-                <div className="customer-nav-panel mb-3">
-                    <ul className="nav nav-pills flex-wrap gap-2 customer-tabs">
-                        <li className="nav-item"><button className={`nav-link ${activeTab === 'products' ? 'active' : ''}`} onClick={() => setActiveTab('products')}>Products</button></li>
-                        <li className="nav-item"><button className={`nav-link ${activeTab === 'milk' ? 'active' : ''}`} onClick={() => setActiveTab('milk')}>Subscribe</button></li>
-                        <li className="nav-item"><button className={`nav-link ${activeTab === 'ghee' ? 'active' : ''}`} onClick={() => setActiveTab('ghee')}>Orders</button></li>
-                        <li className="nav-item"><button className={`nav-link ${activeTab === 'billing' ? 'active' : ''}`} onClick={() => setActiveTab('billing')}>View Billing</button></li>
-                        <li className="nav-item"><button className={`nav-link ${activeTab === 'manage' ? 'active' : ''}`} onClick={() => setActiveTab('manage')}>Manage Subscription</button></li>
-                    </ul>
                 </div>
 
                 {message && <div className="alert alert-success py-2">{message}</div>}
                 {error && <div className="alert alert-danger py-2">{error}</div>}
-
-                {activeTab === 'profile' && (
-                    <div className="card customer-card">
-                        <div className="card-body">
-                            <h5 className="card-title">User Information</h5>
-                            <div className="mb-2"><strong>Customer Name:</strong> {session.name || '-'}</div>
-                            <div className="mb-2"><strong>Email:</strong> {session.email || '-'}</div>
-                            <div><strong>Address:</strong> {session.address || 'Not available. Please login again to refresh profile details.'}</div>
-                        </div>
-                    </div>
-                )}
-
                 {activeTab === 'products' && (
-                    <div className="row g-3">
-                        {filteredProducts.map((product) => (
-                            <div key={product.id} className="col-12 col-sm-6 col-lg-4">
-                                <div className="card customer-card">
-                                    <img
-                                        src={getProductImage(product.name)}
-                                        alt={product.name}
-                                        className="product-image"
-                                    />
-                                    <div className="card-body">
-                                        <h5 className="card-title">{product.name}</h5>
-                                        <p className="text-muted mb-2">{product.description || 'No description'}</p>
-                                        <div className="d-flex align-items-center justify-content-between gap-2 mt-2">
-                                            <div className="fw-semibold">{currency(product.price)}</div>
-                                            <div className="d-flex align-items-center gap-2">
-                                                <button
-                                                    type="button"
-                                                    className="btn btn-outline-danger btn-sm wishlist-mini-btn"
-                                                    onClick={() => addToWishlist(product)}
-                                                    title="Move to Wishlist"
-                                                >
-                                                    ❤
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    className="btn btn-success btn-sm"
-                                                    onClick={() => addToCart(product)}
-                                                >
-                                                    Add to Cart
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                        {filteredProducts.length === 0 && (
-                            <div className="col-12">
-                                <div className="alert alert-light border mb-0">No products found.</div>
-                            </div>
-                        )}
-                    </div>
+                    <CustomerProducts
+                        filteredProducts={filteredProducts}
+                        getProductImage={getProductImage}
+                        currency={currency}
+                        addToWishlist={addToWishlist}
+                        addToCart={addToCart}
+                    />
                 )}
 
                 {activeTab === 'wishlist' && (
@@ -941,142 +935,24 @@ const CustomerPanel = () => {
                 )}
 
                 {activeTab === 'milk' && (
-                    <div className="card customer-card">
-                        <div className="card-body">
-                            <h5 className="card-title">Subscribe </h5>
-                            <form className="row g-3" onSubmit={subscribeMilk}>
-                                <div className="col-12 col-md-6">
-                                    <label className="form-label">Milk Product</label>
-                                    <select
-                                        className="form-select"
-                                        value={milkForm.product}
-                                        onChange={(e) => setMilkForm((prev) => ({ ...prev, product: e.target.value }))}
-                                        required
-                                    >
-                                        <option value="">Select milk product</option>
-                                        {milkProducts.map((p) => (
-                                            <option key={p.id} value={p.id}>{p.name} - {currency(p.price)}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="col-12 col-md-3">
-                                    <label className="form-label">Quantity / day</label>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        className="form-control"
-                                        value={milkForm.quantity}
-                                        onChange={(e) => setMilkForm((prev) => ({ ...prev, quantity: e.target.value }))}
-                                        required
-                                    />
-                                </div>
-                                <div className="col-12 col-md-3 d-grid align-items-end">
-                                    <button className="btn btn-success" type="submit" disabled={isBusy}>Subscribe</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
+                    <CustomerSubscription
+                        milkForm={milkForm}
+                        setMilkForm={setMilkForm}
+                        milkProducts={milkProducts}
+                        currency={currency}
+                        subscribeMilk={subscribeMilk}
+                        isBusy={isBusy}
+                    />
                 )}
 
                 {activeTab === 'ghee' && (
-                    <div className="card customer-card">
-                        <div className="card-body">
-                            {/* <h5 className="card-title">Order Ghee</h5>
-                            <form className="row g-3" onSubmit={orderGhee}>
-                                <div className="col-12 col-md-6">
-                                    <label className="form-label">Ghee Product</label>
-                                    <select
-                                        className="form-select"
-                                        value={gheeForm.product}
-                                        onChange={(e) => setGheeForm((prev) => ({ ...prev, product: e.target.value }))}
-                                        required
-                                    >
-                                        <option value="">Select ghee product</option>
-                                        {gheeProducts.map((p) => (
-                                            <option key={p.id} value={p.id}>{p.name} - {currency(p.price)}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="col-12 col-md-3">
-                                    <label className="form-label">Quantity</label>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        className="form-control"
-                                        value={gheeForm.quantity}
-                                        onChange={(e) => setGheeForm((prev) => ({ ...prev, quantity: e.target.value }))}
-                                        required
-                                    />
-                                </div>
-                                <div className="col-12 col-md-3 d-grid align-items-end">
-                                    <button className="btn btn-warning" type="submit">Order</button>
-                                </div>
-                            </form>
-
-                            <hr /> */}
-                            <h6>Recent Orders (Last {RECENT_ORDER_DAYS} Days)</h6>
-                            <div className="table-responsive">
-                                <table className="table table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>Product</th>
-                                            <th>Qty</th>
-                                            <th>Amount</th>
-                                            <th>Date</th>
-                                            <th>Track</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {recentOrders.length === 0 && (
-                                            <tr><td colSpan="5" className="text-muted">No recent orders.</td></tr>
-                                        )}
-                                        {recentOrders.map((order) => {
-                                            const track = getOrderTrack(order.orderedAt);
-                                            return (
-                                            <tr key={`recent-${order.id}`}>
-                                                <td>{order.productName}</td>
-                                                <td>{order.quantity}</td>
-                                                <td>{currency(order.total)}</td>
-                                                <td>{new Date(order.orderedAt).toLocaleString()}</td>
-                                                <td><span className={`badge ${track.badge}`}>{track.label}</span></td>
-                                            </tr>
-                                        );})}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <h6 className="mt-4">Previous Orders</h6>
-                            <div className="table-responsive">
-                                <table className="table table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>Product</th>
-                                            <th>Qty</th>
-                                            <th>Amount</th>
-                                            <th>Date</th>
-                                            <th>Track</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {previousOrders.length === 0 && (
-                                            <tr><td colSpan="5" className="text-muted">No previous orders.</td></tr>
-                                        )}
-                                        {previousOrders.map((order) => {
-                                            const track = getOrderTrack(order.orderedAt);
-                                            return (
-                                            <tr key={`previous-${order.id}`}>
-                                                <td>{order.productName}</td>
-                                                <td>{order.quantity}</td>
-                                                <td>{currency(order.total)}</td>
-                                                <td>{new Date(order.orderedAt).toLocaleString()}</td>
-                                                <td><span className={`badge ${track.badge}`}>{track.label}</span></td>
-                                            </tr>
-                                        );})}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
+                    <CustomerOrder
+                        RECENT_ORDER_DAYS={RECENT_ORDER_DAYS}
+                        recentOrders={recentOrders}
+                        previousOrders={previousOrders}
+                        currency={currency}
+                        getOrderTrack={getOrderTrack}
+                    />
                 )}
 
                 {activeTab === 'billing' && (
@@ -1109,57 +985,10 @@ const CustomerPanel = () => {
                 )}
 
                 {activeTab === 'manage' && (
-                    <div className="card customer-card">
-                        <div className="card-body">
-                            <h5 className="card-title">Manage Subscription</h5>
-                            <div className="table-responsive">
-                                <table className="table align-middle">
-                                    <thead>
-                                        <tr>
-                                            <th>Product</th>
-                                            <th>Quantity</th>
-                                            <th>Status</th>
-                                            <th>Start Date</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {subscriptions.length === 0 && (
-                                            <tr><td colSpan="5" className="text-muted">No subscriptions found.</td></tr>
-                                        )}
-                                        {subscriptions.map((sub) => (
-                                            <tr key={sub.id}>
-                                                <td>{productById[sub.product]?.name || `Product #${sub.product}`}</td>
-                                                <td>
-                                                    <input
-                                                        type="number"
-                                                        min="1"
-                                                        className="form-control form-control-sm"
-                                                        defaultValue={sub.quantity}
-                                                        onBlur={(e) => updateSubscription(sub.id, { quantity: Number(e.target.value) })}
-                                                    />
-                                                </td>
-                                                <td>
-                                                    <select
-                                                        className="form-select form-select-sm"
-                                                        value={sub.is_active ? 'true' : 'false'}
-                                                        onChange={(e) => updateSubscription(sub.id, { is_active: e.target.value === 'true' })}
-                                                    >
-                                                        <option value="true">Active</option>
-                                                        <option value="false">Paused</option>
-                                                    </select>
-                                                </td>
-                                                <td>{new Date(sub.start_date).toLocaleDateString()}</td>
-                                                <td>
-                                                    <button className="btn btn-outline-danger btn-sm" onClick={() => deleteSubscription(sub.id)}>Delete</button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
+                    <CustomerCategory
+                        categoryGroups={categoryGroups}
+                        currency={currency}
+                    />
                 )}
             </div>
         </div>
@@ -1167,3 +996,7 @@ const CustomerPanel = () => {
 };
 
 export default CustomerPanel;
+
+
+
+
