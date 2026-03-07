@@ -182,6 +182,53 @@
 .customer-product-card {
     border-color: #d5e4ee;
     transition: transform 0.22s ease, box-shadow 0.22s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.customer-product-card .card-body {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.customer-product-card .card-title {
+    min-height: 40px;
+}
+
+.customer-product-card .text-muted.mb-2 {
+    min-height: 40px;
+}
+
+.product-option-slot {
+    min-height: 72px;
+}
+
+.product-option-placeholder {
+    height: 100%;
+}
+
+.product-non-milk-slot {
+    display: flex;
+    flex-direction: column;
+}
+
+.product-pack-pill {
+    height: 31px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 10px;
+    border: 1px solid #d3e0ea;
+    border-radius: 8px;
+    background: #f7fbff;
+    color: #4a6578;
+    font-size: 0.88rem;
+    width: fit-content;
+}
+
+.product-action-row {
+    margin-top: auto;
 }
 
 .customer-product-card:hover {

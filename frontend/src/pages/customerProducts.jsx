@@ -1,11 +1,24 @@
 import React, { useMemo, useState } from 'react';
 
-const CustomerProducts = ({ filteredProducts, getProductImage, currency, addToWishlist, addToCart }) => {
+const CustomerProducts = ({
+    filteredProducts,
+    getProductImage,
+    currency,
+    addToWishlist,
+    addToCart,
+    selectedCategoryName,
+    clearSelectedCategory,
+}) => {
     const [sizeByProduct, setSizeByProduct] = useState({});
-    const litreOptions = useMemo(() => ([
-        { label: '0.5 Litre', value: 0.5 },
-        { label: '1 Litre', value: 1 },
-        { label: '2 Litre', value: 2 },
+    const milkOptions = useMemo(() => ([
+        { label: '0.5 Litre', value: 0.5, unit: 'L' },
+        { label: '1 Litre', value: 1, unit: 'L' },
+        { label: '2 Litre', value: 2, unit: 'L' },
+    ]), []);
+    const nonMilkOptions = useMemo(() => ([
+        { label: '250g', value: 0.25, unit: 'kg' },
+        { label: '500g', value: 0.5, unit: 'kg' },
+        { label: '1kg', value: 1, unit: 'kg' },
     ]), []);
 
     const isMilkProduct = (name) => {
@@ -13,19 +26,33 @@ const CustomerProducts = ({ filteredProducts, getProductImage, currency, addToWi
         return normalized.includes('milk') || normalized.includes('buttermilk');
     };
 
-    const getSelectedLitreValue = (productId) => Number(sizeByProduct[productId] || 1);
+    const getSelectedOption = (productId, isMilk) => {
+        if (sizeByProduct[productId]) return sizeByProduct[productId];
+        return isMilk ? milkOptions[1] : nonMilkOptions[2];
+    };
 
     return (
         <div className="customer-home-section">
             <div className="customer-section-head">
                 <h5 className="customer-section-title">Products</h5>
                 <p className="customer-section-subtitle">Explore fresh dairy products curated for your daily needs.</p>
+                {selectedCategoryName && (
+                    <div className="d-flex align-items-center gap-2 mt-2">
+                        <span className="badge bg-success-subtle text-success-emphasis border">
+                            Category: {selectedCategoryName}
+                        </span>
+                        <button type="button" className="btn btn-sm btn-outline-secondary" onClick={clearSelectedCategory}>
+                            Clear
+                        </button>
+                    </div>
+                )}
             </div>
             <div className="row g-3">
                 {filteredProducts.map((product) => {
                     const isMilk = isMilkProduct(product.name);
-                    const selectedLitreValue = getSelectedLitreValue(product.id);
-                    const displayPrice = Number(product.price || 0) * selectedLitreValue;
+                    const options = isMilk ? milkOptions : nonMilkOptions;
+                    const selectedOption = getSelectedOption(product.id, isMilk);
+                    const displayPrice = Number(product.price || 0) * Number(selectedOption.value || 1);
 
                     return (
                         <div key={product.id} className="col-12 col-sm-6 col-lg-4">
@@ -38,25 +65,26 @@ const CustomerProducts = ({ filteredProducts, getProductImage, currency, addToWi
                                 <div className="card-body">
                                     <h5 className="card-title">{product.name}</h5>
                                     <p className="text-muted mb-2">{product.description || 'No description'}</p>
-                                    {isMilk && (
-                                        <div className="mb-2">
+                                    <div className="product-option-slot mb-2">
+                                        <div>
                                             <label className="form-label mb-1">Choose quantity</label>
                                             <select
                                                 className="form-select form-select-sm"
-                                                value={selectedLitreValue}
-                                                onChange={(e) =>
-                                                    setSizeByProduct((prev) => ({ ...prev, [product.id]: Number(e.target.value) }))
-                                                }
+                                                value={selectedOption.label}
+                                                onChange={(e) => {
+                                                    const next = options.find((opt) => opt.label === e.target.value) || options[0];
+                                                    setSizeByProduct((prev) => ({ ...prev, [product.id]: next }));
+                                                }}
                                             >
-                                                {litreOptions.map((option) => (
-                                                    <option key={`${product.id}-${option.value}`} value={option.value}>
+                                                {options.map((option) => (
+                                                    <option key={`${product.id}-${option.label}`} value={option.label}>
                                                         {option.label}
                                                     </option>
                                                 ))}
                                             </select>
                                         </div>
-                                    )}
-                                    <div className="d-flex align-items-center justify-content-between gap-2 mt-2">
+                                    </div>
+                                    <div className="d-flex align-items-center justify-content-between gap-2 mt-2 product-action-row">
                                         <div className="fw-semibold">{currency(displayPrice)}</div>
                                         <div className="d-flex align-items-center gap-2">
                                             <button
@@ -71,7 +99,7 @@ const CustomerProducts = ({ filteredProducts, getProductImage, currency, addToWi
                                             <button
                                                 type="button"
                                                 className="btn btn-success btn-sm"
-                                                onClick={() => addToCart(product, selectedLitreValue)}
+                                                onClick={() => addToCart(product, selectedOption)}
                                             >
                                                 Add to Cart
                                             </button>

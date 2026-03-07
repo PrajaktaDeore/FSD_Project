@@ -109,7 +109,14 @@ const validateCheckoutAddress = (address) => {
     return nextErrors;
 };
 
-const getLitreLabel = (litreValue) => `${Number(litreValue)} L`;
+const formatQuantityLabel = (value, unit) => {
+    if (unit === 'L') return `${Number(value)}L`;
+    if (unit === 'kg') {
+        if (Number(value) === 1) return '1kg';
+        return `${Math.round(Number(value) * 1000)}g`;
+    }
+    return String(value);
+};
 
 const CustomerPanel = () => {
     const navigate = useNavigate();
@@ -126,6 +133,7 @@ const CustomerPanel = () => {
     const [wishlistItems, setWishlistItems] = useState([]);
     const [activeTab, setActiveTab] = useState('products');
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedCategoryName, setSelectedCategoryName] = useState('');
     const [cartStep, setCartStep] = useState('cart');
     const [checkoutAddress, setCheckoutAddress] = useState({
         fullName: '',
@@ -183,16 +191,22 @@ const CustomerPanel = () => {
     );
     const filteredProducts = useMemo(() => {
         const q = searchQuery.trim().toLowerCase();
-        if (!q) return products.filter((p) => p.is_active);
-        return products.filter(
+        const base = products.filter((p) => p.is_active);
+        const categoryFiltered = selectedCategoryName
+            ? base.filter((p) => {
+                const key = (p.category_name || '').trim() || `Category ${p.category}`;
+                return key === selectedCategoryName;
+            })
+            : base;
+        if (!q) return categoryFiltered;
+        return categoryFiltered.filter(
             (p) =>
-                p.is_active &&
                 (
                     (p.name || '').toLowerCase().includes(q) ||
                     (p.description || '').toLowerCase().includes(q)
                 )
         );
-    }, [products, searchQuery]);
+    }, [products, searchQuery, selectedCategoryName]);
 
     const monthlyMilkEstimate = useMemo(
         () => activeSubscriptions.reduce((sum, sub) => {
@@ -270,6 +284,12 @@ const CustomerPanel = () => {
         }
     };
 
+    const openCategoryProducts = (categoryName) => {
+        setSelectedCategoryName(categoryName);
+        setSearchQuery('');
+        activateTab('products');
+    };
+
     const requireCustomerLogin = (promptMessage = 'Please login to place your order.') => {
         if (isCustomerLoggedIn) return true;
         setMessage('');
@@ -327,14 +347,19 @@ const CustomerPanel = () => {
         setWishlistItems(items);
     };
 
-    const addToCart = (product, litreValue = 1) => {
+    const addToCart = (product, quantitySelection = { value: 1, unit: 'L', label: '1 Litre' }) => {
         if (!requireCustomerLogin('Please login to add items and place an order.')) return;
         setLoginPrompt('');
-        const normalizedLitreValue = Number(litreValue) || 1;
-        const litreLabel = getLitreLabel(normalizedLitreValue);
-        const cartKey = `${product.id}-${normalizedLitreValue}`;
+        const isLegacyNumber = typeof quantitySelection === 'number';
+        const normalizedValue = isLegacyNumber ? Number(quantitySelection) || 1 : Number(quantitySelection.value || 1);
+        const unit = isLegacyNumber ? 'L' : (quantitySelection.unit || 'L');
+        const quantityLabel = isLegacyNumber
+            ? formatQuantityLabel(normalizedValue, 'L')
+            : (quantitySelection.label || formatQuantityLabel(normalizedValue, unit));
+
+        const cartKey = `${product.id}-${unit}-${normalizedValue}`;
         const existing = cartItems.find((item) => item.cartKey === cartKey);
-        const unitPrice = Number(product.price || 0) * normalizedLitreValue;
+        const unitPrice = Number(product.price || 0) * normalizedValue;
         let nextItems = [];
 
         if (existing) {
@@ -353,10 +378,11 @@ const CustomerPanel = () => {
                 {
                     cartKey,
                     productId: product.id,
-                    productName: `${product.name} (${litreLabel})`,
+                    productName: `${product.name} (${quantityLabel})`,
                     baseProductName: product.name,
-                    litreValue: normalizedLitreValue,
-                    litreLabel,
+                    quantityValue: normalizedValue,
+                    quantityUnit: unit,
+                    quantityLabel,
                     quantity: 1,
                     unitPrice,
                     total: unitPrice,
@@ -663,6 +689,7 @@ const CustomerPanel = () => {
                                 value={searchQuery}
                                 onChange={(e) => {
                                     setSearchQuery(e.target.value);
+                                    setSelectedCategoryName('');
                                     if (activeTab !== 'products') {
                                         activateTab('products');
                                     }
@@ -713,6 +740,8 @@ const CustomerPanel = () => {
                         currency={currency}
                         addToWishlist={addToWishlist}
                         addToCart={addToCart}
+                        selectedCategoryName={selectedCategoryName}
+                        clearSelectedCategory={() => setSelectedCategoryName('')}
                     />
                 )}
 
@@ -1131,6 +1160,7 @@ const CustomerPanel = () => {
                     <CustomerCategory
                         categoryGroups={categoryGroups}
                         currency={currency}
+                        onCategorySelect={openCategoryProducts}
                     />
                 )}
             </div>

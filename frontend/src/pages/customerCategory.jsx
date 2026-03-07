@@ -1,6 +1,6 @@
 import React from 'react';
 
-const CustomerCategory = ({ categoryGroups, currency }) => {
+const CustomerCategory = ({ categoryGroups, currency, onCategorySelect }) => {
     return (
         <div className="customer-home-section">
             <div className="customer-section-head">
@@ -15,7 +15,18 @@ const CustomerCategory = ({ categoryGroups, currency }) => {
                 )}
                 {categoryGroups.map((cat) => (
                     <div key={cat.name} className="col-12 col-md-6 col-lg-4">
-                        <div className="card customer-card customer-home-card h-100">
+                        <div
+                            className="card customer-card customer-home-card h-100"
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => onCategorySelect?.(cat.name)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    onCategorySelect?.(cat.name);
+                                }
+                            }}
+                        >
                             <div className="card-body">
                                 <h6 className="mb-2">{cat.name}</h6>
                                 <p className="mb-2 text-muted">Products: {cat.count}</p>
