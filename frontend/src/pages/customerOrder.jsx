@@ -1,6 +1,6 @@
 import React from 'react';
 
-const CustomerOrder = ({ RECENT_ORDER_DAYS, recentOrders, previousOrders, currency, getOrderTrack }) => {
+const CustomerOrder = ({ RECENT_ORDER_DAYS, recentOrders, currency, getOrderTrack }) => {
     return (
         <div className="customer-home-section">
             <div className="customer-section-head">
@@ -44,40 +44,6 @@ const CustomerOrder = ({ RECENT_ORDER_DAYS, recentOrders, previousOrders, curren
                         </table>
                     </div>
 
-                    <h6 className="mt-4">
-                        <i className="fa-solid fa-clock-rotate-left me-2" aria-hidden="true" />
-                        Previous Orders
-                    </h6>
-                    <div className="table-responsive">
-                        <table className="table table-sm customer-soft-table">
-                            <thead>
-                                <tr>
-                                    <th>Product</th>
-                                    <th>Qty</th>
-                                    <th>Amount</th>
-                                    <th>Date</th>
-                                    <th>Track</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {previousOrders.length === 0 && (
-                                    <tr><td colSpan="5" className="text-muted">No previous orders.</td></tr>
-                                )}
-                                {previousOrders.map((order) => {
-                                    const track = getOrderTrack(order.orderedAt);
-                                    return (
-                                        <tr key={`previous-${order.id}`}>
-                                            <td>{order.productName}</td>
-                                            <td>{order.quantity}</td>
-                                            <td>{currency(order.total)}</td>
-                                            <td>{new Date(order.orderedAt).toLocaleString()}</td>
-                                            <td><span className={`badge ${track.badge}`}>{track.label}</span></td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
                 </div>
             </div>
         </div>

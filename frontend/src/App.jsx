@@ -17,11 +17,6 @@ const PrivateRoute = ({ children }) => {
     return isLoggedIn ? children : <Navigate to="/login" />;
 };
 
-const CustomerPrivateRoute = ({ children }) => {
-    const isLoggedIn = !!localStorage.getItem('customerSession');
-    return isLoggedIn ? children : <Navigate to="/login" />;
-};
-
 function App() {
     useEffect(() => {
         const { pathname, hash } = window.location;
@@ -39,7 +34,7 @@ function App() {
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
                     <Route path="/customer-login" element={<Navigate to="/login" replace />} />
-                    <Route path="/customer-panel/*" element={<CustomerPrivateRoute><CustomerPanel /></CustomerPrivateRoute>} />
+                    <Route path="/customer-panel/*" element={<CustomerPanel />} />
                     <Route path="/staff" element={<PrivateRoute><Staff /></PrivateRoute>} />
                     <Route path="/customer" element={<PrivateRoute><Customer /></PrivateRoute>} />
                     <Route path="/category" element={<PrivateRoute><Category /></PrivateRoute>} />

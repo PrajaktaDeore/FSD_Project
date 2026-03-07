@@ -16,12 +16,56 @@ const initialForm = {
 const Register = () => {
     const [form, setForm] = useState(initialForm);
     const [error, setError] = useState('');
+    const [fieldErrors, setFieldErrors] = useState({});
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setForm((prev) => ({ ...prev, [name]: value }));
+        const nextValue = name === 'phone' ? value.replace(/\D/g, '').slice(0, 10) : value;
+        setForm((prev) => ({ ...prev, [name]: nextValue }));
+        setFieldErrors((prev) => ({ ...prev, [name]: '' }));
+    };
+
+    const validateForm = () => {
+        const nextErrors = {};
+        const name = form.name.trim();
+        const email = form.email.trim();
+        const phone = form.phone.trim();
+        const address = form.address.trim();
+        const password = form.password;
+
+        if (!name) {
+            nextErrors.name = 'Name is required.';
+        } else if (name.length < 2) {
+            nextErrors.name = 'Name must be at least 2 characters.';
+        }
+
+        if (!email) {
+            nextErrors.email = 'Email is required.';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            nextErrors.email = 'Enter a valid email address.';
+        }
+
+        if (!phone) {
+            nextErrors.phone = 'Phone is required.';
+        } else if (!/^\d{10}$/.test(phone)) {
+            nextErrors.phone = 'Enter a valid 10-digit phone number.';
+        }
+
+        if (!address) {
+            nextErrors.address = 'Address is required.';
+        } else if (address.length < 5) {
+            nextErrors.address = 'Address must be at least 5 characters.';
+        }
+
+        if (!password) {
+            nextErrors.password = 'Password is required.';
+        } else if (password.length < 6) {
+            nextErrors.password = 'Password must be at least 6 characters.';
+        }
+
+        return nextErrors;
     };
 
     const handleSubmit = async (e) => {
@@ -29,6 +73,12 @@ const Register = () => {
         if (isLoading) return;
 
         setError('');
+        const nextErrors = validateForm();
+        if (Object.keys(nextErrors).length > 0) {
+            setFieldErrors(nextErrors);
+            return;
+        }
+        setFieldErrors({});
         setIsLoading(true);
         const payload = {
             name: form.name.trim(),
@@ -86,6 +136,7 @@ const Register = () => {
                                 onChange={handleChange}
                                 required
                             />
+                            {fieldErrors.name && <div className="text-danger small mt-1">{fieldErrors.name}</div>}
                         </div>
                         <div className="mb-3">
                             <label className="form-label">Email</label>
@@ -97,17 +148,21 @@ const Register = () => {
                                 onChange={handleChange}
                                 required
                             />
+                            {fieldErrors.email && <div className="text-danger small mt-1">{fieldErrors.email}</div>}
                         </div>
                         <div className="mb-3">
                             <label className="form-label">Phone</label>
                             <input
                                 type="text"
+                                inputMode="numeric"
+                                maxLength={10}
                                 className="form-control"
                                 name="phone"
                                 value={form.phone}
                                 onChange={handleChange}
                                 required
                             />
+                            {fieldErrors.phone && <div className="text-danger small mt-1">{fieldErrors.phone}</div>}
                         </div>
                         <div className="mb-3">
                             <label className="form-label">Address</label>
@@ -119,6 +174,7 @@ const Register = () => {
                                 onChange={handleChange}
                                 required
                             />
+                            {fieldErrors.address && <div className="text-danger small mt-1">{fieldErrors.address}</div>}
                         </div>
                         <div className="mb-3">
                             <label className="form-label">Password</label>
@@ -130,6 +186,7 @@ const Register = () => {
                                 onChange={handleChange}
                                 required
                             />
+                            {fieldErrors.password && <div className="text-danger small mt-1">{fieldErrors.password}</div>}
                         </div>
                         {error && <div className="alert alert-danger auth-alert">{error}</div>}
                         <div className="d-flex gap-2">

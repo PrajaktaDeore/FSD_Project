@@ -60,11 +60,64 @@ const getProductImage = (name) => {
     return commonProductImage;
 };
 
+const getPrefilledCheckoutAddress = (sessionData) => ({
+    fullName: String(sessionData?.name || sessionData?.fullName || '').trim(),
+    phone: String(sessionData?.phone || '').replace(/\D/g, '').slice(0, 10),
+    line1: String(sessionData?.line1 || sessionData?.address || '').trim(),
+    city: String(sessionData?.city || '').trim(),
+    pincode: String(sessionData?.pincode || '').replace(/\D/g, '').slice(0, 6),
+});
+
+const validateCheckoutAddress = (address) => {
+    const nextErrors = {};
+    const fullName = address.fullName.trim();
+    const phone = address.phone.replace(/\D/g, '');
+    const line1 = address.line1.trim();
+    const city = address.city.trim();
+    const pincode = address.pincode.replace(/\D/g, '');
+
+    if (!fullName) {
+        nextErrors.fullName = 'Full name is required.';
+    } else if (fullName.length < 2) {
+        nextErrors.fullName = 'Full name must be at least 2 characters.';
+    }
+
+    if (!phone) {
+        nextErrors.phone = 'Phone number is required.';
+    } else if (!/^\d{10}$/.test(phone)) {
+        nextErrors.phone = 'Enter a valid 10-digit phone number.';
+    }
+
+    if (!line1) {
+        nextErrors.line1 = 'Address line is required.';
+    } else if (line1.length < 5) {
+        nextErrors.line1 = 'Address line must be at least 5 characters.';
+    }
+
+    if (!city) {
+        nextErrors.city = 'City is required.';
+    } else if (!/^[a-zA-Z\s.-]{2,}$/.test(city)) {
+        nextErrors.city = 'Enter a valid city name.';
+    }
+
+    if (!pincode) {
+        nextErrors.pincode = 'Pincode is required.';
+    } else if (!/^\d{6}$/.test(pincode)) {
+        nextErrors.pincode = 'Enter a valid 6-digit pincode.';
+    }
+
+    return nextErrors;
+};
+
+const getLitreLabel = (litreValue) => `${Number(litreValue)} L`;
+
 const CustomerPanel = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const session = JSON.parse(localStorage.getItem('customerSession') || '{}');
     const customerId = session.customer_id;
+    const isCustomerLoggedIn = Boolean(customerId);
+    const customerStoreKey = customerId || 'guest';
 
     const [products, setProducts] = useState([]);
     const [subscriptions, setSubscriptions] = useState([]);
@@ -81,6 +134,7 @@ const CustomerPanel = () => {
         city: '',
         pincode: '',
     });
+    const [addressErrors, setAddressErrors] = useState({});
     const [paymentDetails, setPaymentDetails] = useState({
         method: 'upi',
         upiId: '',
@@ -94,6 +148,7 @@ const CustomerPanel = () => {
     const [milkForm, setMilkForm] = useState({ product: '', quantity: 1 });
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
+    const [loginPrompt, setLoginPrompt] = useState('');
     const [isBusy, setIsBusy] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [isNavOpen, setIsNavOpen] = useState(false);
@@ -215,21 +270,25 @@ const CustomerPanel = () => {
         }
     };
 
+    const requireCustomerLogin = (promptMessage = 'Please login to place your order.') => {
+        if (isCustomerLoggedIn) return true;
+        setMessage('');
+        setError('');
+        setLoginPrompt(promptMessage);
+        return false;
+    };
+
     useEffect(() => {
-        if (!customerId) {
-            navigate('/login');
-            return;
-        }
         loadData();
 
         const store = JSON.parse(localStorage.getItem(ORDER_STORAGE_KEY) || '{}');
-        setGheeOrders(store[customerId] || []);
+        setGheeOrders(store[customerStoreKey] || []);
         const cartStore = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || '{}');
-        setCartItems(cartStore[customerId] || []);
+        setCartItems(cartStore[customerStoreKey] || []);
         const wishlistStore = JSON.parse(localStorage.getItem(WISHLIST_STORAGE_KEY) || '{}');
-        setWishlistItems(wishlistStore[customerId] || []);
+        setWishlistItems(wishlistStore[customerStoreKey] || []);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [customerId, navigate]);
+    }, [customerStoreKey]);
 
     useEffect(() => {
         const segment = location.pathname.split('/')[2] || '';
@@ -249,32 +308,38 @@ const CustomerPanel = () => {
 
     const persistOrders = (orders) => {
         const store = JSON.parse(localStorage.getItem(ORDER_STORAGE_KEY) || '{}');
-        store[customerId] = orders;
+        store[customerStoreKey] = orders;
         localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(store));
         setGheeOrders(orders);
     };
 
     const persistCart = (items) => {
         const store = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || '{}');
-        store[customerId] = items;
+        store[customerStoreKey] = items;
         localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(store));
         setCartItems(items);
     };
 
     const persistWishlist = (items) => {
         const store = JSON.parse(localStorage.getItem(WISHLIST_STORAGE_KEY) || '{}');
-        store[customerId] = items;
+        store[customerStoreKey] = items;
         localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(store));
         setWishlistItems(items);
     };
 
-    const addToCart = (product) => {
-        const existing = cartItems.find((item) => item.productId === product.id);
+    const addToCart = (product, litreValue = 1) => {
+        if (!requireCustomerLogin('Please login to add items and place an order.')) return;
+        setLoginPrompt('');
+        const normalizedLitreValue = Number(litreValue) || 1;
+        const litreLabel = getLitreLabel(normalizedLitreValue);
+        const cartKey = `${product.id}-${normalizedLitreValue}`;
+        const existing = cartItems.find((item) => item.cartKey === cartKey);
+        const unitPrice = Number(product.price || 0) * normalizedLitreValue;
         let nextItems = [];
 
         if (existing) {
             nextItems = cartItems.map((item) =>
-                item.productId === product.id
+                item.cartKey === cartKey
                     ? {
                         ...item,
                         quantity: item.quantity + 1,
@@ -286,11 +351,15 @@ const CustomerPanel = () => {
             nextItems = [
                 ...cartItems,
                 {
+                    cartKey,
                     productId: product.id,
-                    productName: product.name,
+                    productName: `${product.name} (${litreLabel})`,
+                    baseProductName: product.name,
+                    litreValue: normalizedLitreValue,
+                    litreLabel,
                     quantity: 1,
-                    unitPrice: Number(product.price || 0),
-                    total: Number(product.price || 0),
+                    unitPrice,
+                    total: unitPrice,
                 },
             ];
         }
@@ -301,6 +370,8 @@ const CustomerPanel = () => {
     };
 
     const addToWishlist = (product) => {
+        if (!requireCustomerLogin('Please login to add items to wishlist.')) return;
+        setLoginPrompt('');
         const exists = wishlistItems.some((item) => item.productId === product.id);
         if (exists) {
             setMessage(`${product.name} is already in wishlist.`);
@@ -321,7 +392,7 @@ const CustomerPanel = () => {
     const updateCartQuantity = (productId, quantity) => {
         const qty = Math.max(1, Number(quantity) || 1);
         const updated = cartItems.map((item) =>
-            item.productId === productId
+            item.cartKey === productId
                 ? { ...item, quantity: qty, total: qty * item.unitPrice }
                 : item
         );
@@ -329,7 +400,7 @@ const CustomerPanel = () => {
     };
 
     const removeCartItem = (productId) => {
-        const updated = cartItems.filter((item) => item.productId !== productId);
+        const updated = cartItems.filter((item) => item.cartKey !== productId);
         persistCart(updated);
     };
 
@@ -339,6 +410,8 @@ const CustomerPanel = () => {
     };
 
     const moveWishlistToCart = (productId) => {
+        if (!requireCustomerLogin('Please login to place your order.')) return;
+        setLoginPrompt('');
         const item = wishlistItems.find((w) => w.productId === productId);
         if (!item) return;
 
@@ -369,41 +442,50 @@ const CustomerPanel = () => {
     };
 
     const openCheckout = () => {
+        if (!requireCustomerLogin('Please login to place your order.')) return;
+        setLoginPrompt('');
         if (cartItems.length === 0) {
             setError('Cart is empty.');
             return;
         }
+        const prefilled = getPrefilledCheckoutAddress(session);
+        setCheckoutAddress((prev) => ({
+            fullName: prev.fullName || prefilled.fullName,
+            phone: prev.phone || prefilled.phone,
+            line1: prev.line1 || prefilled.line1,
+            city: prev.city || prefilled.city,
+            pincode: prev.pincode || prefilled.pincode,
+        }));
+        setAddressErrors({});
         setError('');
         setMessage('');
         setCartStep('address');
     };
 
     const continueToPayment = () => {
-        if (
-            !checkoutAddress.fullName.trim() ||
-            !checkoutAddress.phone.trim() ||
-            !checkoutAddress.line1.trim() ||
-            !checkoutAddress.city.trim() ||
-            !checkoutAddress.pincode.trim()
-        ) {
-            setError('Please fill delivery address details.');
+        if (!requireCustomerLogin('Please login to continue checkout.')) return;
+        setLoginPrompt('');
+        const nextErrors = validateCheckoutAddress(checkoutAddress);
+        if (Object.keys(nextErrors).length > 0) {
+            setAddressErrors(nextErrors);
+            setError('Please correct delivery address details.');
             return;
         }
+        setAddressErrors({});
         setError('');
         setCartStep('payment');
     };
 
     const confirmPlaceOrder = () => {
-        if (
-            !checkoutAddress.fullName.trim() ||
-            !checkoutAddress.phone.trim() ||
-            !checkoutAddress.line1.trim() ||
-            !checkoutAddress.city.trim() ||
-            !checkoutAddress.pincode.trim()
-        ) {
-            setError('Please fill delivery address details.');
+        if (!requireCustomerLogin('Please login to complete your order.')) return;
+        setLoginPrompt('');
+        const nextErrors = validateCheckoutAddress(checkoutAddress);
+        if (Object.keys(nextErrors).length > 0) {
+            setAddressErrors(nextErrors);
+            setError('Please correct delivery address details.');
             return;
         }
+        setAddressErrors({});
 
         if (paymentDetails.method === 'upi' && !paymentDetails.upiId.trim()) {
             setError('Please enter UPI ID.');
@@ -443,6 +525,7 @@ const CustomerPanel = () => {
         persistOrders([...newOrders, ...gheeOrders]);
         persistCart([]);
         setCheckoutAddress({ fullName: '', phone: '', line1: '', city: '', pincode: '' });
+        setAddressErrors({});
         setPaymentDetails({
             method: 'upi',
             upiId: '',
@@ -466,6 +549,8 @@ const CustomerPanel = () => {
 
     const subscribeMilk = async (e) => {
         e.preventDefault();
+        if (!requireCustomerLogin('Please login to subscribe for products.')) return;
+        setLoginPrompt('');
         if (isBusy) return;
         setMessage('');
         setError('');
@@ -527,25 +612,37 @@ const CustomerPanel = () => {
                             >
                                 Cart ({cartCount})
                             </button>
-                            <button type="button" className="btn btn-light btn-sm" onClick={logout}>Logout</button>
-                            <div className="customer-user-menu">
+                            {isCustomerLoggedIn ? (
+                                <>
+                                    <button type="button" className="btn btn-light btn-sm" onClick={logout}>Logout</button>
+                                    <div className="customer-user-menu">
+                                        <button
+                                            type="button"
+                                            className="customer-user-btn"
+                                            onClick={() => setIsUserMenuOpen((prev) => !prev)}
+                                            aria-label="Open user details"
+                                        >
+                                            <i className="fa-solid fa-user" aria-hidden="true" />
+                                        </button>
+                                        {isUserMenuOpen && (
+                                            <div className="customer-user-panel">
+                                                <h6>User Details</h6>
+                                                <div><strong>Name:</strong> {session.name || '-'}</div>
+                                                <div><strong>Email:</strong> {session.email || '-'}</div>
+                                                <div><strong>Address:</strong> {session.address || 'Not available'}</div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </>
+                            ) : (
                                 <button
                                     type="button"
-                                    className="customer-user-btn"
-                                    onClick={() => setIsUserMenuOpen((prev) => !prev)}
-                                    aria-label="Open user details"
+                                    className="btn btn-light btn-sm"
+                                    onClick={() => navigate('/login')}
                                 >
-                                    <i className="fa-solid fa-user" aria-hidden="true" />
+                                    Login
                                 </button>
-                                {isUserMenuOpen && (
-                                    <div className="customer-user-panel">
-                                        <h6>User Details</h6>
-                                        <div><strong>Name:</strong> {session.name || '-'}</div>
-                                        <div><strong>Email:</strong> {session.email || '-'}</div>
-                                        <div><strong>Address:</strong> {session.address || 'Not available'}</div>
-                                    </div>
-                                )}
-                            </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -596,6 +693,19 @@ const CustomerPanel = () => {
 
                 {message && <div className="alert alert-success py-2">{message}</div>}
                 {error && <div className="alert alert-danger py-2">{error}</div>}
+                {loginPrompt && (
+                    <div className="alert alert-warning d-flex align-items-center justify-content-between gap-2 py-2">
+                        <span>{loginPrompt}</span>
+                        <button
+                            type="button"
+                            className="btn btn-sm text-white"
+                            style={{ backgroundColor: '#198754', borderColor: '#198754' }}
+                            onClick={() => navigate('/login')}
+                        >
+                            Login
+                        </button>
+                    </div>
+                )}
                 {activeTab === 'products' && (
                     <CustomerProducts
                         filteredProducts={filteredProducts}
@@ -676,7 +786,7 @@ const CustomerPanel = () => {
                                                     <tr><td colSpan="5" className="text-muted">Cart is empty.</td></tr>
                                                 )}
                                                 {cartItems.map((item) => (
-                                                    <tr key={item.productId}>
+                                                    <tr key={item.cartKey || item.productId}>
                                                         <td>{item.productName}</td>
                                                         <td>{currency(item.unitPrice)}</td>
                                                         <td style={{ maxWidth: '120px' }}>
@@ -685,7 +795,7 @@ const CustomerPanel = () => {
                                                                 min="1"
                                                                 className="form-control form-control-sm"
                                                                 value={item.quantity}
-                                                                onChange={(e) => updateCartQuantity(item.productId, e.target.value)}
+                                                                onChange={(e) => updateCartQuantity(item.cartKey || item.productId, e.target.value)}
                                                             />
                                                         </td>
                                                         <td>{currency(item.total)}</td>
@@ -693,7 +803,7 @@ const CustomerPanel = () => {
                                                             <button
                                                                 type="button"
                                                                 className="btn btn-outline-danger btn-sm"
-                                                                onClick={() => removeCartItem(item.productId)}
+                                                                onClick={() => removeCartItem(item.cartKey || item.productId)}
                                                             >
                                                                 Remove
                                                             </button>
@@ -726,40 +836,73 @@ const CustomerPanel = () => {
                                             <input
                                                 className="form-control"
                                                 value={checkoutAddress.fullName}
-                                                onChange={(e) => setCheckoutAddress((prev) => ({ ...prev, fullName: e.target.value }))}
+                                                onChange={(e) => {
+                                                    setCheckoutAddress((prev) => ({ ...prev, fullName: e.target.value }));
+                                                    setAddressErrors((prev) => ({ ...prev, fullName: '' }));
+                                                }}
+                                                aria-invalid={Boolean(addressErrors.fullName)}
                                             />
+                                            {addressErrors.fullName && <div className="text-danger small mt-1">{addressErrors.fullName}</div>}
                                         </div>
                                         <div className="col-12 col-md-6">
                                             <label className="form-label">Phone</label>
                                             <input
+                                                type="tel"
+                                                inputMode="numeric"
+                                                maxLength={10}
                                                 className="form-control"
                                                 value={checkoutAddress.phone}
-                                                onChange={(e) => setCheckoutAddress((prev) => ({ ...prev, phone: e.target.value }))}
+                                                onChange={(e) => {
+                                                    const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                                    setCheckoutAddress((prev) => ({ ...prev, phone: value }));
+                                                    setAddressErrors((prev) => ({ ...prev, phone: '' }));
+                                                }}
+                                                aria-invalid={Boolean(addressErrors.phone)}
                                             />
+                                            {addressErrors.phone && <div className="text-danger small mt-1">{addressErrors.phone}</div>}
                                         </div>
                                         <div className="col-12">
                                             <label className="form-label">Address Line</label>
                                             <input
                                                 className="form-control"
                                                 value={checkoutAddress.line1}
-                                                onChange={(e) => setCheckoutAddress((prev) => ({ ...prev, line1: e.target.value }))}
+                                                onChange={(e) => {
+                                                    setCheckoutAddress((prev) => ({ ...prev, line1: e.target.value }));
+                                                    setAddressErrors((prev) => ({ ...prev, line1: '' }));
+                                                }}
+                                                aria-invalid={Boolean(addressErrors.line1)}
                                             />
+                                            {addressErrors.line1 && <div className="text-danger small mt-1">{addressErrors.line1}</div>}
                                         </div>
                                         <div className="col-12 col-md-6">
                                             <label className="form-label">City</label>
                                             <input
                                                 className="form-control"
                                                 value={checkoutAddress.city}
-                                                onChange={(e) => setCheckoutAddress((prev) => ({ ...prev, city: e.target.value }))}
+                                                onChange={(e) => {
+                                                    setCheckoutAddress((prev) => ({ ...prev, city: e.target.value }));
+                                                    setAddressErrors((prev) => ({ ...prev, city: '' }));
+                                                }}
+                                                aria-invalid={Boolean(addressErrors.city)}
                                             />
+                                            {addressErrors.city && <div className="text-danger small mt-1">{addressErrors.city}</div>}
                                         </div>
                                         <div className="col-12 col-md-6">
                                             <label className="form-label">Pincode</label>
                                             <input
+                                                type="text"
+                                                inputMode="numeric"
+                                                maxLength={6}
                                                 className="form-control"
                                                 value={checkoutAddress.pincode}
-                                                onChange={(e) => setCheckoutAddress((prev) => ({ ...prev, pincode: e.target.value }))}
+                                                onChange={(e) => {
+                                                    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                                    setCheckoutAddress((prev) => ({ ...prev, pincode: value }));
+                                                    setAddressErrors((prev) => ({ ...prev, pincode: '' }));
+                                                }}
+                                                aria-invalid={Boolean(addressErrors.pincode)}
                                             />
+                                            {addressErrors.pincode && <div className="text-danger small mt-1">{addressErrors.pincode}</div>}
                                         </div>
                                     </div>
 
@@ -767,7 +910,7 @@ const CustomerPanel = () => {
                                     <h6>Confirm Items</h6>
                                     <ul className="list-group mb-3">
                                         {cartItems.map((item) => (
-                                            <li key={`confirm-${item.productId}`} className="list-group-item d-flex justify-content-between">
+                                            <li key={`confirm-${item.cartKey || item.productId}`} className="list-group-item d-flex justify-content-between">
                                                 <span>{item.productName} x {item.quantity}</span>
                                                 <span>{currency(item.total)}</span>
                                             </li>
@@ -910,7 +1053,7 @@ const CustomerPanel = () => {
                                     <h6>Order Summary</h6>
                                     <ul className="list-group mb-3">
                                         {cartItems.map((item) => (
-                                            <li key={`pay-${item.productId}`} className="list-group-item d-flex justify-content-between">
+                                            <li key={`pay-${item.cartKey || item.productId}`} className="list-group-item d-flex justify-content-between">
                                                 <span>{item.productName} x {item.quantity}</span>
                                                 <span>{currency(item.total)}</span>
                                             </li>

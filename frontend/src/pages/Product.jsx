@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import './admin.css';
 
 const Product = () => {
     const [items, setItems] = useState([]);
@@ -80,8 +81,9 @@ const Product = () => {
 
 
     return (
-        <div className="mt-4">
-            <h2>Product Management</h2>
+        <div className="admin-page mt-4">
+            <h2 className="admin-title">Product Management</h2>
+            <p className="admin-subtitle">Create and maintain your product catalog with consistent pricing.</p>
             <div className="card mb-4 mt-3">
                 <div className="card-body">
                     <h5 className="card-title">Add New Product</h5>
@@ -136,7 +138,8 @@ const Product = () => {
                     </form>
                 </div>
             </div>
-            <table className="table table-striped">
+            <div className="admin-table-wrap">
+            <table className="table table-striped admin-table">
                 <thead>
                     <tr>
                         <th>NAME</th>
@@ -150,7 +153,7 @@ const Product = () => {
                     {items.map(item => (
                         <tr key={item.id}>
                             <td>{item.name}</td>
-                            <td>${parseFloat(item.price).toFixed(2)}</td>
+                            <td>₹{parseFloat(item.price).toFixed(2)}</td>
                             <td>{item.category}</td>
                             <td>{item.description}</td>
                             <td>
@@ -166,10 +169,11 @@ const Product = () => {
                     ))}
                 </tbody>
             </table>
+            </div>
              {showModal && editItem && (
-    <div className="modal d-block" tabIndex="-1">
-        <div className="modal-dialog">
-            <div className="modal-content">
+    <div className="modal d-block admin-modal" tabIndex="-1">
+        <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content admin-modal-content">
                 <div className="modal-header">
                     <h5 className="modal-title">Update Staff</h5>
                     <button 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import './admin.css';
 
 const Category = () => {
     const [items, setItems] = useState([]);
@@ -77,8 +78,9 @@ const Category = () => {
     };
 
     return (
-        <div className="mt-4">
-            <h2>Category Management</h2>
+        <div className="admin-page mt-4">
+            <h2 className="admin-title">Category Management</h2>
+            <p className="admin-subtitle">Organize product categories with clear labels and descriptions.</p>
             <div className="card mb-4 mt-3">
                 <div className="card-body">
                     <h5 className="card-title">Add New Category</h5>
@@ -111,7 +113,8 @@ const Category = () => {
                     </form>
                 </div>
             </div>
-            <table className="table table-striped">
+            <div className="admin-table-wrap">
+            <table className="table table-striped admin-table">
                 <thead>
                     <tr>
                         <th>NAME</th>
@@ -137,10 +140,11 @@ const Category = () => {
                     ))}
                 </tbody>
             </table>
+            </div>
                  {showModal && editItem && (
-    <div className="modal d-block" tabIndex="-1">
-        <div className="modal-dialog">
-            <div className="modal-content">
+    <div className="modal d-block admin-modal" tabIndex="-1">
+        <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content admin-modal-content">
                 <div className="modal-header">
                     <h5 className="modal-title">Update Staff</h5>
                     <button 

@@ -8,6 +8,10 @@ import './home.css';
 
 const Home = () => {
     const navigate = useNavigate();
+    const goToProductsPage = () => navigate('/customer-panel/products');
+    const goToCategoryPage = () => navigate('/customer-panel/category');
+    const goToOrdersPage = () => navigate('/customer-panel/orders');
+    const goToSubscriptionPage = () => navigate('/customer-panel/subscription');
     const scrollToSection = (id) => {
         const section = document.getElementById(id);
         if (section) {
@@ -57,7 +61,18 @@ const Home = () => {
                     <p className="text-muted mb-4">Explore fresh milk, ghee, paneer, curd, and daily essentials.</p>
                     <div className="row g-3">
                         <div className="col-12 col-md-4">
-                            <div className="home-card product-card">
+                            <div
+                                className="home-card product-card"
+                                role="button"
+                                tabIndex={0}
+                                onClick={goToProductsPage}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        goToProductsPage();
+                                    }
+                                }}
+                            >
                                 <img src={cowMilkImage} alt="Cow Milk" className="home-product-image" />
                                 <div className="home-product-copy">
                                     <div className="home-product-title">Fresh Cow Milk</div>
@@ -66,7 +81,18 @@ const Home = () => {
                             </div>
                         </div>
                         <div className="col-12 col-md-4">
-                            <div className="home-card product-card">
+                            <div
+                                className="home-card product-card"
+                                role="button"
+                                tabIndex={0}
+                                onClick={goToProductsPage}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        goToProductsPage();
+                                    }
+                                }}
+                            >
                                 <img src={buffalloMilkImage} alt="Buffalo Milk" className="home-product-image" />
                                 <div className="home-product-copy">
                                     <div className="home-product-title">Fresh Buffalo Milk</div>
@@ -75,7 +101,18 @@ const Home = () => {
                             </div>
                         </div>
                         <div className="col-12 col-md-4">
-                            <div className="home-card product-card">
+                            <div
+                                className="home-card product-card"
+                                role="button"
+                                tabIndex={0}
+                                onClick={goToProductsPage}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        goToProductsPage();
+                                    }
+                                }}
+                            >
                                 <img src={butterMilkImage} alt="Butter Milk" className="home-product-image" />
                                 <div className="home-product-copy">
                                     <div className="home-product-title">Butter Milk</div>
@@ -93,7 +130,18 @@ const Home = () => {
                     <p className="text-muted mb-4">Milk, fermented products, and value-added dairy categories.</p>
                     <div className="row g-3">
                         <div className="col-12 col-md-4">
-                            <div className="home-card">
+                            <div
+                                className="home-card"
+                                role="button"
+                                tabIndex={0}
+                                onClick={goToCategoryPage}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        goToCategoryPage();
+                                    }
+                                }}
+                            >
                                 <div className="home-product-copy">
                                     <div className="home-product-title">Daily Delivery</div>
                                     <p>Receive fresh dairy every day with reliable morning delivery to your doorstep.</p>
@@ -101,7 +149,18 @@ const Home = () => {
                             </div>
                         </div>
                         <div className="col-12 col-md-4">
-                            <div className="home-card">
+                            <div
+                                className="home-card"
+                                role="button"
+                                tabIndex={0}
+                                onClick={goToCategoryPage}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        goToCategoryPage();
+                                    }
+                                }}
+                            >
                                 <div className="home-product-copy">
                                     <div className="home-product-title">Subscription Packs</div>
                                     <p>Choose value packs for regular needs with flexible frequency and quantity options.</p>
@@ -109,7 +168,18 @@ const Home = () => {
                             </div>
                         </div>
                         <div className="col-12 col-md-4">
-                            <div className="home-card">
+                            <div
+                                className="home-card"
+                                role="button"
+                                tabIndex={0}
+                                onClick={goToCategoryPage}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        goToCategoryPage();
+                                    }
+                                }}
+                            >
                                 <div className="home-product-copy">
                                     <div className="home-product-title">One-time Orders</div>
                                     <p>Place instant single orders whenever you need extra milk, ghee, or dairy products.</p>
@@ -126,7 +196,18 @@ const Home = () => {
                     <p className="text-muted mb-4">Track current orders and view your previous deliveries.</p>
                     <div className="row g-3">
                         <div className="col-12 col-md-6">
-                            <div className="home-card">
+                            <div
+                                className="home-card"
+                                role="button"
+                                tabIndex={0}
+                                onClick={goToOrdersPage}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        goToOrdersPage();
+                                    }
+                                }}
+                            >
                                 <div className="home-product-copy">
                                     <div className="home-product-title">Live Order Tracking</div>
                                     <p>See real-time updates from order placed to out-for-delivery and final delivery status.</p>
@@ -134,7 +215,18 @@ const Home = () => {
                             </div>
                         </div>
                         <div className="col-12 col-md-6">
-                            <div className="home-card">
+                            <div
+                                className="home-card"
+                                role="button"
+                                tabIndex={0}
+                                onClick={goToOrdersPage}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        goToOrdersPage();
+                                    }
+                                }}
+                            >
                                 <div className="home-product-copy">
                                     <div className="home-product-title">Order History</div>
                                     <p>Review past purchases, quantities, and payment details whenever you need quick reference.</p>
@@ -151,7 +243,18 @@ const Home = () => {
                     <p className="text-muted mb-4">Set up recurring deliveries and manage plans anytime.</p>
                     <div className="row g-3">
                         <div className="col-12 col-md-4">
-                            <div className="home-card">
+                            <div
+                                className="home-card"
+                                role="button"
+                                tabIndex={0}
+                                onClick={goToSubscriptionPage}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        goToSubscriptionPage();
+                                    }
+                                }}
+                            >
                                 <div className="home-product-copy">
                                     <div className="home-product-title">Daily Plan</div>
                                     <p>Get fresh milk delivered every day at your preferred quantity and timing.</p>
@@ -159,7 +262,18 @@ const Home = () => {
                             </div>
                         </div>
                         <div className="col-12 col-md-4">
-                            <div className="home-card">
+                            <div
+                                className="home-card"
+                                role="button"
+                                tabIndex={0}
+                                onClick={goToSubscriptionPage}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        goToSubscriptionPage();
+                                    }
+                                }}
+                            >
                                 <div className="home-product-copy">
                                     <div className="home-product-title">Weekly Plan</div>
                                     <p>Choose scheduled weekly deliveries for convenient, planned household supply.</p>
@@ -167,7 +281,18 @@ const Home = () => {
                             </div>
                         </div>
                         <div className="col-12 col-md-4">
-                            <div className="home-card">
+                            <div
+                                className="home-card"
+                                role="button"
+                                tabIndex={0}
+                                onClick={goToSubscriptionPage}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        goToSubscriptionPage();
+                                    }
+                                }}
+                            >
                                 <div className="home-product-copy">
                                     <div className="home-product-title">Flexible Pause/Resume</div>
                                     <p>Pause deliveries during travel and resume instantly without losing your plan setup.</p>
@@ -184,6 +309,14 @@ const Home = () => {
                     <p className="mb-1">Phone: +91 98765 43210</p>
                     <p className="mb-1">Email: support@milkman.com</p>
                     <p className="mb-0">Address: Dairy Road, Pune, Maharashtra</p>
+                    <div className="home-contact-socials mt-3">
+                        <a href="https://facebook.com" target="_blank" rel="noreferrer" aria-label="Facebook">
+                            <i className="fa-brands fa-facebook-f" aria-hidden="true" />
+                        </a>
+                        <a href="https://linkedin.com" target="_blank" rel="noreferrer" aria-label="LinkedIn">
+                            <i className="fa-brands fa-linkedin-in" aria-hidden="true" />
+                        </a>
+                    </div>
                 </div>
             </section>
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import './admin.css';
 
 const Subscription = () => {
     const [items, setItems] = useState([]);
@@ -94,8 +95,9 @@ const Subscription = () => {
 
 
     return (
-        <div className="mt-4">
-            <h2>Subscription Management</h2>
+        <div className="admin-page mt-4">
+            <h2 className="admin-title">Subscription Management</h2>
+            <p className="admin-subtitle">Monitor recurring plans, quantities, and customer subscriptions.</p>
             <div className="card mb-4 mt-3">
                 <div className="card-body">
                     <h5 className="card-title">Add New Subscription</h5>
@@ -139,7 +141,8 @@ const Subscription = () => {
                     </form>
                 </div>
             </div>
-            <table className="table table-striped">
+            <div className="admin-table-wrap">
+            <table className="table table-striped admin-table">
                 <thead>
                     <tr>
                         <th>CUSTOMER ID</th>
@@ -169,14 +172,15 @@ const Subscription = () => {
                     ))}
                 </tbody>
             </table>
+            </div>
 
-{editItem && (
+{showModal && editItem && (
   <div
-    className="modal d-block"
+    className="modal d-block admin-modal"
     tabIndex="-1"
   >
-    <div className="modal-dialog">
-      <div className="modal-content">
+    <div className="modal-dialog modal-dialog-centered">
+      <div className="modal-content admin-modal-content">
 
         <div className="modal-header">
           <h5 className="modal-title">Update Subscription</h5>
