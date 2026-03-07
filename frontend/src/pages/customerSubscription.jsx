@@ -1,6 +1,23 @@
 import React from 'react';
 
-const CustomerSubscription = ({ milkForm, setMilkForm, milkProducts, currency, subscribeMilk, isBusy }) => {
+const CustomerSubscription = ({
+    milkForm,
+    setMilkForm,
+    milkProducts,
+    activeSubscriptions,
+    getProductName,
+    getProductPrice,
+    currency,
+    subscribeMilk,
+    isBusy,
+}) => {
+    const getDayOnly = (dateValue) => {
+        if (!dateValue) return '-';
+        const date = new Date(dateValue);
+        if (Number.isNaN(date.getTime())) return '-';
+        return date.toLocaleDateString('en-IN', { weekday: 'long' });
+    };
+
     return (
         <div className="customer-home-section">
             <div className="customer-section-head">
@@ -40,6 +57,39 @@ const CustomerSubscription = ({ milkForm, setMilkForm, milkProducts, currency, s
                             <button className="btn btn-success" type="submit" disabled={isBusy}>Subscribe</button>
                         </div>
                     </form>
+                </div>
+            </div>
+
+            <div className="card customer-card customer-home-card mt-3">
+                <div className="card-body">
+                    <h6 className="mb-3">Your Subscriptions</h6>
+                    <div className="table-responsive">
+                        <table className="table table-sm customer-soft-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Quantity / day</th>
+                                    <th>Starts On</th>
+                                    <th>Price / day</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {activeSubscriptions.length === 0 && (
+                                    <tr>
+                                        <td colSpan="4" className="text-muted">No subscriptions added yet.</td>
+                                    </tr>
+                                )}
+                                {activeSubscriptions.map((sub) => (
+                                    <tr key={sub.id}>
+                                        <td>{getProductName(sub.product)}</td>
+                                        <td>{sub.quantity}</td>
+                                        <td>{getDayOnly(sub.start_date)}</td>
+                                        <td>{currency(Number(sub.quantity) * Number(getProductPrice(sub.product) || 0))}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>

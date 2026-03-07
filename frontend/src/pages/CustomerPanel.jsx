@@ -1111,6 +1111,9 @@ const CustomerPanel = () => {
                         milkForm={milkForm}
                         setMilkForm={setMilkForm}
                         milkProducts={milkProducts}
+                        activeSubscriptions={activeSubscriptions}
+                        getProductName={(productId) => productById[productId]?.name || `Product #${productId}`}
+                        getProductPrice={(productId) => Number(productById[productId]?.price || 0)}
                         currency={currency}
                         subscribeMilk={subscribeMilk}
                         isBusy={isBusy}
