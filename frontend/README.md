@@ -1,6 +1,6 @@
-# Milkman React Admin Panel
+# Milky Basket React Admin Panel
 
-This project is a modern React-based admin panel for the Milkman management system. It was developed to replicate and modernize the original AngularJS-based backend admin panel.
+This project is a modern React-based admin panel for the Milky Basket management system. It was developed to replicate and modernize the original AngularJS-based backend admin panel.
 
 
 

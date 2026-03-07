@@ -1,9 +1,9 @@
 {
   "info": {
-    "name": "Milkman - Staff CRUD",
+    "name": "Milky Basket - Staff CRUD",
     "_postman_id": "b72f1b1e-7f2d-4a23-9b91-4b3f7f2b2f10",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Postman collection for Staff CRUD endpoints in the Milkman project.\nBase URL uses a collection variable {{base_url}}. Update it to your server address."
+    "description": "Postman collection for Staff CRUD endpoints in the Milky Basket project.\nBase URL uses a collection variable {{base_url}}. Update it to your server address."
   },
   "variable": [
     {

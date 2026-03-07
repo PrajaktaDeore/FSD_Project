@@ -110,7 +110,7 @@ const Register = () => {
                     <i className="fa-solid fa-xmark auth-close-icon" aria-hidden="true" onClick={() => navigate('/')} />
                 </div>
                 <div className="card-body">
-                    <p className="auth-kicker mb-0">Milkman Portal</p>
+                    <p className="auth-kicker mb-0">Milky Basket Portal</p>
                     <h3 className="auth-title">Register</h3>
                     <p className="auth-subtitle">Create a customer or staff account and continue to login.</p>
                     <form onSubmit={handleSubmit}>

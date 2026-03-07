@@ -118,6 +118,13 @@ const formatQuantityLabel = (value, unit) => {
     return String(value);
 };
 
+const buildCartKey = (productId, quantitySelection) => {
+    const isLegacyNumber = typeof quantitySelection === 'number';
+    const normalizedValue = isLegacyNumber ? Number(quantitySelection) || 1 : Number(quantitySelection?.value || 1);
+    const unit = isLegacyNumber ? 'L' : (quantitySelection?.unit || 'L');
+    return `${productId}-${unit}-${normalizedValue}`;
+};
+
 const CustomerPanel = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -357,7 +364,7 @@ const CustomerPanel = () => {
             ? formatQuantityLabel(normalizedValue, 'L')
             : (quantitySelection.label || formatQuantityLabel(normalizedValue, unit));
 
-        const cartKey = `${product.id}-${unit}-${normalizedValue}`;
+        const cartKey = buildCartKey(product.id, quantitySelection);
         const existing = cartItems.find((item) => item.cartKey === cartKey);
         const unitPrice = Number(product.price || 0) * normalizedValue;
         let nextItems = [];
@@ -392,7 +399,6 @@ const CustomerPanel = () => {
 
         persistCart(nextItems);
         setMessage(`${product.name} added to cart.`);
-        activateTab('cart', { resetCart: true });
     };
 
     const addToWishlist = (product) => {
@@ -412,7 +418,6 @@ const CustomerPanel = () => {
             },
         ]);
         setMessage(`${product.name} moved to wishlist.`);
-        activateTab('wishlist');
     };
 
     const updateCartQuantity = (productId, quantity) => {
@@ -609,7 +614,7 @@ const CustomerPanel = () => {
         <div className="customer-shell">
             <nav className="customer-top-navbar">
                 <div className="container customer-top-navbar-inner">
-                    <div className="customer-nav-title">Milkman</div>
+                    <div className="customer-nav-title">Milky Basket</div>
                     <button
                         type="button"
                         className="customer-nav-toggle"
@@ -739,7 +744,10 @@ const CustomerPanel = () => {
                         getProductImage={getProductImage}
                         currency={currency}
                         addToWishlist={addToWishlist}
+                        isWishlisted={(productId) => wishlistItems.some((item) => item.productId === productId)}
                         addToCart={addToCart}
+                        getCartKey={buildCartKey}
+                        goToCart={() => activateTab('cart', { resetCart: true })}
                         selectedCategoryName={selectedCategoryName}
                         clearSelectedCategory={() => setSelectedCategoryName('')}
                     />

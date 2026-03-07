@@ -64,7 +64,7 @@ const Login = () => {
                     <i className="fa-solid fa-xmark auth-close-icon" aria-hidden="true" onClick={() => navigate('/')} />
                 </div>
                 <div className="card-body">
-                    <p className="auth-kicker mb-0">Milkman Portal</p>
+                    <p className="auth-kicker mb-0">Milky Basket Portal</p>
                     <h3 className="auth-title">Login</h3>
                     <p className="auth-subtitle">Sign in with your email or username.</p>
                     <form onSubmit={handleLogin}>

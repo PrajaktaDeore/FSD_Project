@@ -5,11 +5,15 @@ const CustomerProducts = ({
     getProductImage,
     currency,
     addToWishlist,
+    isWishlisted,
     addToCart,
+    getCartKey,
+    goToCart,
     selectedCategoryName,
     clearSelectedCategory,
 }) => {
     const [sizeByProduct, setSizeByProduct] = useState({});
+    const [recentlyAddedKeys, setRecentlyAddedKeys] = useState({});
     const milkOptions = useMemo(() => ([
         { label: '0.5 Litre', value: 0.5, unit: 'L' },
         { label: '1 Litre', value: 1, unit: 'L' },
@@ -53,6 +57,10 @@ const CustomerProducts = ({
                     const options = isMilk ? milkOptions : nonMilkOptions;
                     const selectedOption = getSelectedOption(product.id, isMilk);
                     const displayPrice = Number(product.price || 0) * Number(selectedOption.value || 1);
+                    const wishlisted = isWishlisted?.(product.id);
+                    const selectionKey = getCartKey?.(product.id, selectedOption)
+                        || `${product.id}-${selectedOption.unit}-${selectedOption.value}`;
+                    const showGoToCart = Boolean(recentlyAddedKeys[selectionKey]);
 
                     return (
                         <div key={product.id} className="col-12 col-sm-6 col-lg-4">
@@ -89,19 +97,26 @@ const CustomerProducts = ({
                                         <div className="d-flex align-items-center gap-2">
                                             <button
                                                 type="button"
-                                                className="btn btn-outline-danger btn-sm wishlist-mini-btn"
+                                                className={`btn btn-sm wishlist-mini-btn ${wishlisted ? 'btn-danger text-white' : 'btn-outline-danger'}`}
                                                 onClick={() => addToWishlist(product)}
                                                 title="Move to Wishlist"
                                                 aria-label="Move to Wishlist"
                                             >
-                                                <i className="fa-regular fa-heart" aria-hidden="true" />
+                                                <i className={`fa-${wishlisted ? 'solid' : 'regular'} fa-heart`} aria-hidden="true" />
                                             </button>
                                             <button
                                                 type="button"
-                                                className="btn btn-success btn-sm"
-                                                onClick={() => addToCart(product, selectedOption)}
+                                                className={`btn btn-sm ${showGoToCart ? 'btn-outline-success' : 'btn-success'}`}
+                                                onClick={() => {
+                                                    if (showGoToCart) {
+                                                        goToCart?.();
+                                                        return;
+                                                    }
+                                                    addToCart(product, selectedOption);
+                                                    setRecentlyAddedKeys((prev) => ({ ...prev, [selectionKey]: true }));
+                                                }}
                                             >
-                                                Add to Cart
+                                                {showGoToCart ? 'Go to Cart' : 'Add to Cart'}
                                             </button>
                                         </div>
                                     </div>

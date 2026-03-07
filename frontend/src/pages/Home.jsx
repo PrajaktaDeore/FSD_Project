@@ -8,6 +8,7 @@ import './home.css';
 
 const Home = () => {
     const navigate = useNavigate();
+    const isLoggedIn = Boolean(localStorage.getItem('customerSession') || localStorage.getItem('staffToken'));
     const goToProductsPage = () => navigate('/customer-panel/products');
     const goToCategoryPage = () => navigate('/customer-panel/category');
     const goToOrdersPage = () => navigate('/customer-panel/orders');
@@ -22,7 +23,7 @@ const Home = () => {
     return (
         <div className="home-page">
             <nav className="home-navbar">
-                <div className="home-brand">Milkman</div>
+                <div className="home-brand">Milky Basket</div>
                 <div className="home-nav-links">
                     <button type="button" onClick={() => scrollToSection('home')}>Home</button>
                     <button type="button" onClick={() => scrollToSection('products')}>Products</button>
@@ -39,18 +40,20 @@ const Home = () => {
                     <div className="home-hero-content">
                         <h1>Fresh Dairy, Delivered Daily</h1>
                         <p>Manage milk, ghee, subscriptions, and orders from one place.</p>
-                        <div className="home-actions">
-                            <button
-                                className="btn btn-primary btn-lg"
-                                style={{ background: '#0f8b5f', borderColor: '#0f8b5f' }}
-                                onClick={() => navigate('/login')}
-                            >
-                                Login
-                            </button>
-                            <button className="btn btn-outline-light btn-lg" onClick={() => navigate('/register')}>
-                                Register
-                            </button>
-                        </div>
+                        {!isLoggedIn && (
+                            <div className="home-actions">
+                                <button
+                                    className="btn btn-primary btn-lg"
+                                    style={{ background: '#0f8b5f', borderColor: '#0f8b5f' }}
+                                    onClick={() => navigate('/login')}
+                                >
+                                    Login
+                                </button>
+                                <button className="btn btn-outline-light btn-lg" onClick={() => navigate('/register')}>
+                                    Register
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             </section>

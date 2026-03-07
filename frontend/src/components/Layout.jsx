@@ -60,7 +60,7 @@ const Layout = ({ children }) => {
             {showAdminNav && (
                 <nav className="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
                     <div className="container">
-                        <Link className="navbar-brand" to="/">Milkman Admin</Link>
+                        <Link className="navbar-brand" to="/">Milky Basket Admin</Link>
                         <button
                             className="navbar-toggler"
                             type="button"
