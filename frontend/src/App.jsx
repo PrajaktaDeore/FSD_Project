@@ -20,10 +20,21 @@ const PrivateRoute = ({ children }) => {
 function App() {
     useEffect(() => {
         const { pathname, hash } = window.location;
-        if (pathname !== '/') {
-            const targetHash = hash || '#/';
-            window.history.replaceState(null, '', `/${targetHash}`);
-        }
+        if (hash) return;
+
+        // If someone loads a non-hash URL (e.g. /login) in production, move it to the HashRouter form
+        // without breaking deployments served from a sub-path (Vite `BASE_URL`).
+        if (pathname.includes('.')) return;
+
+        const base = import.meta.env?.BASE_URL || '/';
+        const basePath = base.endsWith('/') ? base.slice(0, -1) : base;
+        const withinBase = basePath ? pathname.startsWith(basePath) : true;
+        if (!withinBase) return;
+
+        const remainder = basePath ? pathname.slice(basePath.length) : pathname;
+        if (!remainder || remainder === '/') return;
+
+        window.location.replace(`${base}#${remainder}`);
     }, []);
 
     return (

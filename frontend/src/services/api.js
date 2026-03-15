@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000';
+const rawBaseUrl = (import.meta.env?.VITE_API_BASE_URL ?? '').trim();
+const API_BASE_URL = rawBaseUrl
+    ? rawBaseUrl.replace(/\/+$/, '')
+    : (import.meta.env?.DEV ? 'http://localhost:8000' : '');
 
 const api = axios.create({
     baseURL: API_BASE_URL,
@@ -31,7 +34,8 @@ api.interceptors.response.use(
         if (status === 401 || isAuth403) {
             localStorage.removeItem('staffToken');
             localStorage.removeItem('staffUser');
-            window.location.replace('/#/login');
+            const base = import.meta.env?.BASE_URL || '/';
+            window.location.replace(`${base}#/login`);
         }
         return Promise.reject(error);
     }

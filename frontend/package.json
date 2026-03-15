@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "check:casing": "node scripts/check-import-casing.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },
