@@ -8,11 +8,20 @@ import './home.css';
 
 const Home = () => {
     const navigate = useNavigate();
-    const isLoggedIn = Boolean(localStorage.getItem('customerSession') || localStorage.getItem('staffToken'));
+    const isStaffLoggedIn = Boolean(localStorage.getItem('staffToken'));
+    const isCustomerLoggedIn = Boolean(localStorage.getItem('customerSession'));
+    const isLoggedIn = isStaffLoggedIn || isCustomerLoggedIn;
     const goToProductsPage = () => navigate('/customer-panel/products');
     const goToCategoryPage = () => navigate('/customer-panel/category');
     const goToOrdersPage = () => navigate('/customer-panel/orders');
     const goToSubscriptionPage = () => navigate('/customer-panel/subscription');
+
+    const logout = () => {
+        localStorage.removeItem('staffToken');
+        localStorage.removeItem('staffUser');
+        localStorage.removeItem('customerSession');
+        navigate('/');
+    };
     const scrollToSection = (id) => {
         const section = document.getElementById(id);
         if (section) {
@@ -24,13 +33,40 @@ const Home = () => {
         <div className="home-page">
             <nav className="home-navbar">
                 <div className="home-brand">Milky Basket</div>
-                <div className="home-nav-links">
+                <div className="home-nav-right">
+                    <div className="home-nav-links">
                     <button type="button" onClick={() => scrollToSection('home')}>Home</button>
                     <button type="button" onClick={() => scrollToSection('products')}>Products</button>
                     <button type="button" onClick={() => scrollToSection('category')}>Category</button>
                     <button type="button" onClick={() => scrollToSection('orders')}>Orders</button>
                     <button type="button" onClick={() => scrollToSection('subscription')}>Subscription</button>
                     <button type="button" onClick={() => scrollToSection('contact')}>Contact</button>
+                </div>
+                    <div className="home-nav-actions">
+                        {!isLoggedIn ? (
+                            <>
+                                <button type="button" className="home-auth-btn primary" onClick={() => navigate('/login')}>
+                                    Login
+                                </button>
+                                <button type="button" className="home-auth-btn" onClick={() => navigate('/register')}>
+                                    Register
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <button
+                                    type="button"
+                                    className="home-auth-btn primary"
+                                    onClick={() => navigate(isStaffLoggedIn ? '/staff' : '/customer-panel/products')}
+                                >
+                                    {isStaffLoggedIn ? 'Admin' : 'Portal'}
+                                </button>
+                                <button type="button" className="home-auth-btn" onClick={logout}>
+                                    Logout
+                                </button>
+                            </>
+                        )}
+                    </div>
                 </div>
             </nav>
 

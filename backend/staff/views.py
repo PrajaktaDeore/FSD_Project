@@ -35,7 +35,7 @@ class StaffViewSet(APIView):
 
 
     def put(self, request, pk, format=None):
-        staff = Staff.objects.get(pk=pk)
+        staff = get_object_or_404(Staff, pk=pk)
         serializer = StaffSerializer(staff, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -43,7 +43,7 @@ class StaffViewSet(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk, format=None):
-        staff = Staff.objects.get(pk=pk)
+        staff = get_object_or_404(Staff, pk=pk)
         staff.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 

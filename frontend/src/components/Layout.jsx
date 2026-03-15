@@ -5,7 +5,15 @@ const Layout = ({ children }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const user = JSON.parse(localStorage.getItem('staffUser') || '{}');
+    const user = (() => {
+        const raw = localStorage.getItem('staffUser');
+        if (!raw) return {};
+        try {
+            return JSON.parse(raw);
+        } catch {
+            return {};
+        }
+    })();
     const isLoggedIn = !!localStorage.getItem('staffToken');
     const isAuthOrCustomerRoute =
         location.pathname === '/' ||

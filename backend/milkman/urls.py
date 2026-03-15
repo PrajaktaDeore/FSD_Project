@@ -15,8 +15,35 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path,include
-from django.views.generic import TemplateView
+from django.http import JsonResponse
+from django.urls import include, path
+from django.template import TemplateDoesNotExist, loader
+from django.template.response import TemplateResponse
+
+
+def home(request):
+    """
+    Serve the built frontend (index.html) if present; otherwise return a simple
+    health payload so hitting http://localhost:8000/ doesn't 500 in dev.
+    """
+    try:
+        loader.get_template("index.html")
+    except TemplateDoesNotExist:
+        return JsonResponse(
+            {
+                "status": "ok",
+                "message": "Backend running. Build/copy the frontend to serve index.html from Django templates.",
+                "endpoints": [
+                    "/staff/",
+                    "/customer/",
+                    "/category/",
+                    "/product/",
+                    "/subscription/",
+                    "/admin/",
+                ],
+            }
+        )
+    return TemplateResponse(request, "index.html")
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -25,5 +52,5 @@ urlpatterns = [
     path('category/', include('category.urls')),
     path('product/', include('product.urls')),
     path('subscription/', include('subscription.urls')),
-    path('', TemplateView.as_view(template_name='index.html'), name='home'),
+    path('', home, name='home'),
 ]

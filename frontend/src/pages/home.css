@@ -43,6 +43,44 @@
     background: rgba(255, 255, 255, 0.16);
 }
 
+.home-nav-right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.home-nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.home-auth-btn {
+    border: 1px solid rgba(255, 255, 255, 0.48);
+    background: transparent;
+    color: #ffffff;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-weight: 600;
+}
+
+.home-auth-btn:hover {
+    background: rgba(255, 255, 255, 0.16);
+}
+
+.home-auth-btn.primary {
+    border-color: #0f8b5f;
+    background: #0f8b5f;
+}
+
+.home-auth-btn.primary:hover {
+    background: #0c714d;
+    border-color: #0c714d;
+}
+
 .home-hero {
     position: relative;
     min-height: 100vh;

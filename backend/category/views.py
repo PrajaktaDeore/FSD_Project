@@ -2,6 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from django.shortcuts import get_object_or_404
 from .models import Category
 from .serializers import CategorySerializer
 from staff.auth import StaffTokenAuthentication
@@ -23,7 +24,7 @@ class CategoryViewSet(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, pk, format=None):
-        category = Category.objects.get(pk=pk)
+        category = get_object_or_404(Category, pk=pk)
         serializer = CategorySerializer(category, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -31,6 +32,6 @@ class CategoryViewSet(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk, format=None):
-        category = Category.objects.get(pk=pk)
+        category = get_object_or_404(Category, pk=pk)
         category.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
