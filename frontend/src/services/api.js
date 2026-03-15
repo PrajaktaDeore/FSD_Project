@@ -5,8 +5,15 @@ const API_BASE_URL = rawBaseUrl
     ? rawBaseUrl.replace(/\/+$/, '')
     : (import.meta.env?.DEV ? 'http://localhost:8000' : '');
 
+const rawApiPrefix = (import.meta.env?.VITE_API_PREFIX ?? '').trim();
+const API_PREFIX = rawApiPrefix
+    ? `/${rawApiPrefix.replace(/^\/+|\/+$/g, '')}`
+    : '';
+
+const API_ROOT = `${API_BASE_URL}${API_PREFIX}`;
+
 const api = axios.create({
-    baseURL: API_BASE_URL,
+    baseURL: API_ROOT,
 });
 
 api.interceptors.request.use((config) => {
@@ -42,4 +49,4 @@ api.interceptors.response.use(
 );
 
 export default api;
-export { API_BASE_URL };
+export { API_BASE_URL, API_PREFIX, API_ROOT };

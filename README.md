@@ -53,7 +53,7 @@ Full-stack web application for managing a dairy/milk delivery business. The proj
 
 3. Install dependencies:
    ```bash
-   pip install django djangorestframework django-cors-headers
+   pip install -r requirements.txt
    ```
 
 4. Run migrations and start the server:
@@ -78,6 +78,40 @@ The API will be available at `http://localhost:8000`.
    ```
 
 Vite will print the local URL (commonly `http://localhost:5173`).
+
+## Production (Ubuntu + nginx + gunicorn)
+
+This repo supports deployments where nginx serves the built React app and proxies Django under `/api/`.
+
+### Backend environment
+
+- Copy `backend/.env.example` and set values for production (at minimum `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`, `DJANGO_DEBUG=0`).
+- Run Django behind gunicorn (example):
+  ```bash
+  cd backend
+  python -m venv .venv
+  source .venv/bin/activate
+  pip install -r requirements.txt
+  python manage.py migrate
+  gunicorn milkman.wsgi:application --bind 127.0.0.1:8000
+  ```
+
+### Frontend environment + build
+
+Vite env vars are applied at build time:
+
+- Copy `frontend/.env.production.example` to `frontend/.env.production`
+- Build:
+  ```bash
+  cd frontend
+  npm ci
+  npm run build
+  ```
+
+### nginx routing (summary)
+
+- Serve the SPA from `frontend/dist`
+- Proxy Django API under `/api/`
 
 ## Notes
 
